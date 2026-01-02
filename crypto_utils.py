@@ -12,7 +12,7 @@ def generate_aes_key() -> bytes:
     return AESGCM.generate_key(bit_length=256)
 
 
-def encrypt_file(file_path: str, aes_key: bytes) -> str:
+def encrypt_file(file_path: str, aes_key: bytes, output_path: str = None) -> str:
     """Encrypts a file using AES-256-GCM."""
     aesgcm = AESGCM(aes_key)
     nonce = os.urandom(12)  # 96-bit nonce
@@ -22,8 +22,11 @@ def encrypt_file(file_path: str, aes_key: bytes) -> str:
 
     ct = aesgcm.encrypt(nonce, data, None)
 
-    output_path = os.path.join("encrypted", os.path.basename(file_path) + ".enc")
-    os.makedirs("encrypted", exist_ok=True)
+    if output_path is None:
+        output_path = os.path.join("encrypted", os.path.basename(file_path) + ".enc")
+
+    os.makedirs(os.path.dirname(output_path), exist_ok=True)
+
     with open(output_path, "wb") as f:
         f.write(nonce + ct)
 
