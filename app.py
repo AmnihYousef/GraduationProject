@@ -143,7 +143,7 @@ def logout():
 # ==================================================
 # Dashboard (DB-based)
 # ==================================================
-@app.route("/dashboard")
+@app.route("/dashboard", strict_slashes=False)
 def dashboard():
     if "user" not in session:
         return redirect("/")
