@@ -182,6 +182,8 @@ def share():
     recipient_email = request.form.get("email")
     filename = request.form.get("filename")
 
+    sender = session["user"]
+
     # رابط التحميل
     download_link = f"https://graduationproject-2-cc9w.onrender.com/download/{filename}"
 
@@ -194,13 +196,13 @@ def share():
     msg["To"] = recipient_email
 
     msg.set_content(f"""
-You have received an encrypted file.
+You have received an encrypted file from: {sender}
 
 Filename: {filename}
 Download Link:
 {download_link}
 
-{decrypt_key_note}
+The decryption key is shared separately for security reasons.
 """)
 
     with smtplib.SMTP_SSL("smtp.gmail.com", 465) as smtp:
