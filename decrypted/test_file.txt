@@ -1,0 +1,13 @@
+Secure File Sharing System Test
+
+Student: Dema Al-Mashaqbeh
+Graduation Project
+
+This file is used to test:
+- Upload
+- AES Encryption
+- SHA-256 Hash
+- Secure Download
+- Decryption
+
+If you can read this after download, the system works correctly.

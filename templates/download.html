@@ -1,0 +1,34 @@
+{% extends "layout.html" %}
+
+{% block content %}
+<h3 class="mb-4">⬇ Secure File Download</h3>
+
+<p>
+    <strong>File:</strong>
+    <span class="text-primary">{{ filename }}</span>
+</p>
+
+<form method="POST">
+    <!-- اسم الملف مخفي -->
+    <input type="hidden" name="filename" value="{{ filename }}">
+
+    <input
+        type="text"
+        name="key"
+        class="form-control mb-3"
+        placeholder="Enter decryption key"
+        required
+    >
+
+    <button class="btn btn-success">
+        Decrypt & Download
+    </button>
+</form>
+
+{% if error %}
+<div class="alert alert-danger mt-3">
+    {{ error }}
+</div>
+{% endif %}
+
+{% endblock %}

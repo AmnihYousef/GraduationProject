@@ -1,0 +1,86 @@
+{% extends "layout.html" %}
+{% block content %}
+
+<h4 class="mb-4">Dashboard</h4>
+
+<!-- ================= My Files ================= -->
+<h5>My Encrypted Files</h5>
+<table class="table table-hover bg-white shadow-sm rounded mb-4">
+    <thead>
+        <tr>
+            <th>Filename</th>
+            <th>Status</th>
+            <th>Actions</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for file in my_files %}
+        <tr>
+            <td>{{ file }}</td>
+            <td>Encrypted</td>
+            <td>
+                <a href="/download/{{ file }}" class="btn btn-sm btn-outline-primary">
+                    Download
+                </a>
+            </td>
+        </tr>
+        {% else %}
+        <tr>
+            <td colspan="3" class="text-center text-muted">
+                No files uploaded yet
+            </td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+
+<!-- ================= Share File ================= -->
+
+<h5 class="mt-5">Share Encrypted File via Email</h5>
+
+<form id="shareForm" class="bg-white p-4 shadow-sm rounded">
+    <div class="mb-3">
+        <label class="form-label">Recipient Email</label>
+        <input type="email" name="email" class="form-control" required>
+    </div>
+
+    <div class="mb-3">
+        <label class="form-label">Select File</label>
+        <select name="filename" class="form-control" required>
+            {% for file in my_files %}
+            <option value="{{ file }}">{{ file }}</option>
+            {% endfor %}
+        </select>
+    </div>
+
+    <button type="submit" class="btn btn-success">
+        Send Encrypted File
+    </button>
+</form>
+
+<!-- مكان الرسالة -->
+<div id="shareMessage" class="mt-2 text-success" style="display:none;"></div>
+
+<script>
+document.getElementById('shareForm').addEventListener('submit', function(e){
+    e.preventDefault(); // تمنع إعادة تحميل الصفحة
+    const form = e.target;
+    const email = form.email.value;
+    const filename = form.filename.value;
+
+    // هنا ممكن تعمل request للـ backend لو بدك (مثلاً fetch)
+    // أو تكتفي بالرسالة:
+    const msgDiv = document.getElementById('shareMessage');
+    msgDiv.textContent = `File "${filename}" sent successfully to ${email}!`;
+    msgDiv.style.display = 'block';
+
+    // تختفي بعد 3 ثواني
+    setTimeout(()=>{ msgDiv.style.display='none'; }, 3000);
+
+    // تنظيف الفورم
+    form.reset();
+});
+</script>
+
+
+{% endblock %}

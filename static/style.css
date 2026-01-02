@@ -1,0 +1,29 @@
+body {
+    font-family: 'Inter', sans-serif;
+}
+
+.auth-bg {
+    background: linear-gradient(120deg, #e0e7ff, #f8fafc);
+}
+
+.auth-illustration {
+    background: linear-gradient(160deg, #2563eb, #1e40af);
+}
+
+.sidebar {
+    width: 220px;
+    background: #f8fafc;
+    min-height: 100vh;
+}
+
+.upload-box {
+    border: 2px dashed #2563eb;
+    padding: 30px;
+    text-align: center;
+    border-radius: 10px;
+    color: #2563eb;
+}
+
+.dashboard-bg {
+    background: #f1f5f9;
+}

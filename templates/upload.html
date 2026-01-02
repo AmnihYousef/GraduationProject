@@ -1,0 +1,24 @@
+{% extends "layout.html" %}
+
+{% block content %}
+<h3 class="mb-4">🔐 Secure File Upload</h3>
+
+<form method="POST" enctype="multipart/form-data">
+    <input type="file" name="file" class="form-control mb-3" required>
+    <button class="btn btn-primary">
+        Upload & Encrypt
+    </button>
+</form>
+
+{% if hash %}
+<hr>
+<div class="alert alert-success mt-3">
+    <p><strong>File Name:</strong> {{ filename }}</p>
+    <p><strong>SHA-256 Hash:</strong></p>
+    <small class="text-break">{{ hash }}</small>
+
+    <p class="mt-2"><strong>Decryption Key:</strong></p>
+    <small class="text-break">{{ key }}</small>
+</div>
+{% endif %}
+{% endblock %}
