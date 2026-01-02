@@ -203,7 +203,7 @@ The decryption key is shared separately for security reasons.
 
     # إرسال الإيميل
     with smtplib.SMTP_SSL("smtp.gmail.com", 465) as smtp:
-        smtp.login("graduation.project.secure@gmail.com", "هنا App Password")
+        smtp.login("graduation.project.secure@gmail.com", "eizo hobr rurz znyg")
         smtp.send_message(msg)
 
     return redirect("/dashboard")
