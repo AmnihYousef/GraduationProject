@@ -1,5 +1,8 @@
 import os
 import sqlite3
+import smtplib
+from email.message import EmailMessage
+
 
 from flask import (
     Flask,
@@ -166,6 +169,46 @@ def dashboard():
         my_files=my_files,
         shared_files=[]
     )
+
+
+# ==================================================
+# Share Encrypted File via Email
+# ==================================================
+@app.route("/share", methods=["POST"])
+def share():
+    if "user" not in session:
+        return redirect("/")
+
+    recipient_email = request.form.get("email")
+    filename = request.form.get("filename")
+
+    # رابط التحميل
+    download_link = f"https://graduationproject-2-cc9w.onrender.com/download/{filename}"
+
+    # ملاحظة: مفتاح الفك يُسلّم خارج النظام
+    decrypt_key_note = "Decryption key is shared separately for security reasons."
+
+    msg = EmailMessage()
+    msg["Subject"] = "Encrypted File Shared With You"
+    msg["From"] = "graduation.project.secure@gmail.com"
+    msg["To"] = recipient_email
+
+    msg.set_content(f"""
+You have received an encrypted file.
+
+Filename: {filename}
+Download Link:
+{download_link}
+
+{decrypt_key_note}
+""")
+
+    with smtplib.SMTP_SSL("smtp.gmail.com", 465) as smtp:
+        smtp.login("graduation.project.secure@gmail.com", "GRADUATION-project-SECURE!1")
+        smtp.send_message(msg)
+
+    return redirect("/dashboard")
+
 
 # ==================================================
 # Settings
