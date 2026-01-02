@@ -3,32 +3,11 @@ import sqlite3
 import smtplib
 from email.message import EmailMessage
 
-
-from flask import (
-    Flask,
-    render_template,
-    request,
-    send_file,
-    redirect,
-    session
-)
+from flask import Flask, render_template, request, send_file, redirect, session
 
 from database import init_db
-from crypto_utils import (
-    generate_aes_key,
-    encrypt_file,
-    decrypt_file,
-    compute_sha256
-)
-
-from auth_utils import (
-    is_password_strong,
-    email_exists,
-    create_user,
-    get_user_by_email,
-    verify_password
-)
-
+from crypto_utils import generate_aes_key, encrypt_file, decrypt_file, compute_sha256
+from auth_utils import is_password_strong, email_exists, create_user, get_user_by_email, verify_password
 
 # ==================================================
 # Initialize App & Database
@@ -45,10 +24,7 @@ def save_file_to_db(user_email, original_filename, encrypted_path):
     conn = sqlite3.connect("secure_file_sharing.db")
     cursor = conn.cursor()
 
-    cursor.execute(
-        "SELECT id FROM users WHERE email = ?",
-        (user_email,)
-    )
+    cursor.execute("SELECT id FROM users WHERE email = ?", (user_email,))
     user_id = cursor.fetchone()[0]
 
     file_size = os.path.getsize(encrypted_path)
@@ -83,25 +59,15 @@ def login():
         password = request.form.get("password")
 
         user = get_user_by_email(email)
-
         if not user:
-            return render_template(
-                "login.html",
-                error="Email or password is incorrect"
-            )
+            return render_template("login.html", error="Email or password is incorrect")
 
         user_id, user_email, password_hash = user
-
         if not verify_password(password_hash, password):
-            return render_template(
-                "login.html",
-                error="Email or password is incorrect"
-            )
+            return render_template("login.html", error="Email or password is incorrect")
 
-        # تسجيل الدخول الصحيح
         session["user"] = user_email
         session["user_id"] = user_id
-
         return redirect("/dashboard")
 
     return render_template("login.html")
@@ -117,18 +83,11 @@ def register():
         password = request.form.get("password")
 
         if email_exists(email):
-            return render_template(
-                "register.html",
-                error="Email already registered"
-            )
+            return render_template("register.html", error="Email already registered")
 
         rules, strong = is_password_strong(password)
         if not strong:
-            return render_template(
-                "register.html",
-                rules=rules,
-                error="Password is not strong enough"
-            )
+            return render_template("register.html", rules=rules, error="Password is not strong enough")
 
         create_user(email, password)
         return redirect("/")
@@ -144,7 +103,7 @@ def logout():
     return redirect("/")
 
 # ==================================================
-# Dashboard (DB-based)
+# Dashboard
 # ==================================================
 @app.route("/dashboard", strict_slashes=False)
 def dashboard():
@@ -164,11 +123,43 @@ def dashboard():
     my_files = [row[0] for row in cursor.fetchall()]
     conn.close()
 
-    return render_template(
-        "dashboard.html",
-        my_files=my_files,
-        shared_files=[]
-    )
+    return render_template("dashboard.html", my_files=my_files, shared_files=[])
+
+
+# ==================================================
+# Upload + Encrypt
+# ==================================================
+@app.route("/upload", methods=["GET", "POST"])
+def upload():
+    if "user" not in session:
+        return redirect("/")
+
+    if request.method == "POST":
+        if "file" not in request.files:
+            return render_template("upload.html", error="No file selected")
+
+        file = request.files["file"]
+        if file.filename == "":
+            return render_template("upload.html", error="Empty filename")
+
+        os.makedirs("uploads", exist_ok=True)
+        os.makedirs("encrypted", exist_ok=True)
+
+        # حفظ الملف الأصلي مؤقتاً
+        upload_path = os.path.join("uploads", file.filename)
+        file.save(upload_path)
+
+        # تشفير الملف وحفظه في مجلد "encrypted"
+        aes_key = generate_aes_key()
+        encrypted_path = os.path.join("encrypted", file.filename + ".enc")
+        encrypt_file(upload_path, aes_key, output_path=encrypted_path)
+
+        file_hash = compute_sha256(encrypted_path)
+        save_file_to_db(session["user"], file.filename, encrypted_path)
+
+        return render_template("upload.html", hash=file_hash, key=aes_key.hex(), filename=file.filename)
+
+    return render_template("upload.html")
 
 
 # ==================================================
@@ -181,15 +172,13 @@ def share():
 
     recipient_email = request.form.get("email")
     filename = request.form.get("filename")
-
     sender = session["user"]
 
-    # رابط التحميل
-    download_link = f"https://graduationproject-2-cc9w.onrender.com/download/{filename}"
+    encrypted_path = f"encrypted/{filename}.enc"
+    if not os.path.exists(encrypted_path):
+        return "File not found!", 404
 
-    # ملاحظة: مفتاح الفك يُسلّم خارج النظام
-    decrypt_key_note = "Decryption key is shared separately for security reasons."
-
+    # إعداد الرسالة
     msg = EmailMessage()
     msg["Subject"] = "Encrypted File Shared With You"
     msg["From"] = "graduation.project.secure@gmail.com"
@@ -199,17 +188,50 @@ def share():
 You have received an encrypted file from: {sender}
 
 Filename: {filename}
-Download Link:
-{download_link}
 
 The decryption key is shared separately for security reasons.
 """)
 
+    # إرفاق الملف المشفر
+    with open(encrypted_path, "rb") as f:
+        msg.add_attachment(
+            f.read(),
+            maintype="application",
+            subtype="octet-stream",
+            filename=filename + ".enc"
+        )
+
+    # إرسال الإيميل
     with smtplib.SMTP_SSL("smtp.gmail.com", 465) as smtp:
-        smtp.login("graduation.project.secure@gmail.com", "zdko umlm gdst burc")
+        smtp.login("graduation.project.secure@gmail.com", "هنا App Password")
         smtp.send_message(msg)
 
     return redirect("/dashboard")
+
+
+# ==================================================
+# Download + Decrypt
+# ==================================================
+@app.route("/download/<filename>", methods=["GET", "POST"])
+def download(filename):
+    if "user" not in session:
+        return redirect("/")
+
+    encrypted_path = f"encrypted/{filename}.enc"
+    if request.method == "POST":
+        key_hex = request.form.get("key")
+
+        if not os.path.exists(encrypted_path):
+            return render_template("download.html", filename=filename, error="File not found")
+
+        try:
+            key = bytes.fromhex(key_hex)
+            decrypted_path = decrypt_file(encrypted_path, key)
+            return send_file(decrypted_path, as_attachment=True)
+        except Exception:
+            return render_template("download.html", filename=filename, error="Invalid decryption key")
+
+    return render_template("download.html", filename=filename)
 
 
 # ==================================================
@@ -222,80 +244,6 @@ def settings():
 
     return render_template("settings.html")
 
-# ==================================================
-# Upload + Encrypt
-# ==================================================
-@app.route("/upload", methods=["GET", "POST"])
-def upload():
-    if "user" not in session:
-        return redirect("/")
-
-    if request.method == "POST":
-
-        if "file" not in request.files:
-            return render_template("upload.html", error="No file selected")
-
-        file = request.files["file"]
-
-        if file.filename == "":
-            return render_template("upload.html", error="Empty filename")
-
-        os.makedirs("uploads", exist_ok=True)
-        upload_path = os.path.join("uploads", file.filename)
-        file.save(upload_path)
-
-        aes_key = generate_aes_key()
-        encrypted_path = encrypt_file(upload_path, aes_key)
-        file_hash = compute_sha256(encrypted_path)
-
-        save_file_to_db(
-            session["user"],
-            file.filename,
-            encrypted_path
-        )
-
-        return render_template(
-            "upload.html",
-            hash=file_hash,
-            key=aes_key.hex(),
-            filename=file.filename
-        )
-
-    return render_template("upload.html")
-
-# ==================================================
-# Download + Decrypt
-# ==================================================
-@app.route("/download/<filename>", methods=["GET", "POST"])
-def download(filename):
-    if "user" not in session:
-        return redirect("/")
-
-    encrypted_path = f"encrypted/{filename}.enc"
-
-    if request.method == "POST":
-        key_hex = request.form.get("key")
-
-        if not os.path.exists(encrypted_path):
-            return render_template(
-                "download.html",
-                filename=filename,
-                error="File not found"
-            )
-
-        try:
-            key = bytes.fromhex(key_hex)
-            decrypted_path = decrypt_file(encrypted_path, key)
-            return send_file(decrypted_path, as_attachment=True)
-
-        except Exception:
-            return render_template(
-                "download.html",
-                filename=filename,
-                error="Invalid decryption key"
-            )
-
-    return render_template("download.html", filename=filename)
 
 # ==================================================
 # Run App
