@@ -206,7 +206,7 @@ The decryption key is shared separately for security reasons.
 """)
 
     with smtplib.SMTP_SSL("smtp.gmail.com", 465) as smtp:
-        smtp.login("graduation.project.secure@gmail.com", "GRADUATION-project-SECURE!1")
+        smtp.login("graduation.project.secure@gmail.com", "zdko umlm gdst burc")
         smtp.send_message(msg)
 
     return redirect("/dashboard")
