@@ -2,21 +2,7 @@
 
 {% block content %}
 
-<!-- ========== رسائل التنبيه ========== -->
-{% if request.args.get('message') %}
-<div class="alert alert-success alert-dismissible fade show mt-3" role="alert">
-    <strong>✅ Success!</strong> {{ request.args.get('message')|replace('+', ' ') }}
-    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-</div>
-{% endif %}
 
-{% if request.args.get('error') %}
-<div class="alert alert-danger alert-dismissible fade show mt-3" role="alert">
-    <strong>❌ Error!</strong> {{ request.args.get('error')|replace('+', ' ') }}
-    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-</div>
-{% endif %}
-<!-- ========== نهاية الرسائل ========== -->
 
 <h4 class="mb-4">Dashboard</h4>
 
