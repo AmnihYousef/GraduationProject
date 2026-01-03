@@ -167,6 +167,8 @@ def upload():
 # ==================================================
 @app.route("/share", methods=["POST"])
 def share():
+    print("SHARE ROUTE HIT")
+
     if "user" not in session:
         return redirect("/")
 
@@ -205,6 +207,7 @@ The decryption key is shared separately for security reasons.
     with smtplib.SMTP_SSL("smtp.gmail.com", 465) as smtp:
         smtp.login("graduation.project.secure@gmail.com", "eizohobrrurzznyg")
         smtp.send_message(msg)
+        print("EMAIL SENT SUCCESSFULLY")
 
     return redirect("/dashboard")
 
