@@ -39,6 +39,7 @@
 <h5 class="mt-5">Share Encrypted File via Email</h5>
 
 <form action="/share" method="POST" class="bg-white p-4 shadow-sm rounded">
+
     <div class="mb-3">
         <label class="form-label">Recipient Email</label>
         <input type="email" name="email" class="form-control" required>
@@ -57,30 +58,5 @@
         Send Encrypted File
     </button>
 </form>
-
-<!-- مكان الرسالة -->
-<div id="shareMessage" class="mt-2 text-success" style="display:none;"></div>
-
-<script>
-document.getElementById('shareForm').addEventListener('submit', function(e){
-    e.preventDefault(); // تمنع إعادة تحميل الصفحة
-    const form = e.target;
-    const email = form.email.value;
-    const filename = form.filename.value;
-
-    // هنا ممكن تعمل request للـ backend لو بدك (مثلاً fetch)
-    // أو تكتفي بالرسالة:
-    const msgDiv = document.getElementById('shareMessage');
-    msgDiv.textContent = `File "${filename}" sent successfully to ${email}!`;
-    msgDiv.style.display = 'block';
-
-    // تختفي بعد 3 ثواني
-    setTimeout(()=>{ msgDiv.style.display='none'; }, 3000);
-
-    // تنظيف الفورم
-    form.reset();
-});
-</script>
-
 
 {% endblock %}
